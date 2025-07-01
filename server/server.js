@@ -13,14 +13,24 @@ const server = http.createServer(app);
 
 // Allow only your frontend domain (replace with your actual Vercel frontend URL)
 const allowedOrigins = [
-  "https://chat-howngpfjr-bhumees-projects-b0089f91.vercel.app"
+  "http://localhost:5173", // for local development
+  "https://chat-howngpfjr-bhumees-projects-b0089f91.vercel.app", // deployed frontend (or replace with your actual)
+  "https://chat-app-chi-sepia-57.vercel.app", // any other frontend you used
 ];
 
 // CORS Setup
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed for this origin"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Optional: Set headers manually (extra protection)
 app.use((req, res, next) => {
