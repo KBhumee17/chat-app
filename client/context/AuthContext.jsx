@@ -5,6 +5,16 @@ import { io } from "socket.io-client";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 axios.defaults.baseURL = backendUrl;
+// Intercept requests and convert 'token' to 'Authorization' header
+axios.interceptors.request.use((config) => {
+  const token = config.headers.token || localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    delete config.headers.token;
+  }
+  return config;
+});
+
 
 export const AuthContext = createContext();
 

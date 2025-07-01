@@ -4,7 +4,8 @@ import User from "../models/User.js";
 //Middleware to protect routes
 export const protectRoute = async (req, res, next)=>{
     try {
-        const token = req.headers.token;
+        const authHeader = req.headers.authorization;
+    console.log("🔐 Auth header received:", authHeader);
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET) 
 
@@ -16,7 +17,8 @@ export const protectRoute = async (req, res, next)=>{
         next();
     } catch (error) {
         console.log(error.message)
-        res.json ({ success: false, message: error.message });
+        res.status(401).json({ success: false, message: error.message });
+
 
     }
 }
