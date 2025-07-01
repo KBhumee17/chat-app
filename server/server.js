@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 // Define allowed origins first!
 const allowedOrigins = [
-  "https://chat-app-chi-sepia-57.vercel.app"
+  "https://chat-howngpfjr-bhumees-projects-b0089f91.vercel.app"
 ];
 
 // Setup CORS for express
@@ -25,6 +25,12 @@ app.use(cors({
 
 // Middleware
 app.use(express.json({ limit: "4mb" }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", allowedOrigins[0]);
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 
 // Setup socket.io AFTER allowedOrigins is defined
 export const io = new Server(server, {
