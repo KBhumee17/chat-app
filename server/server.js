@@ -39,7 +39,15 @@ io.on("connection", (socket) => {
 
 // middleware Setup
 app.use(express.json({limit: "4mb"}));
-app.use(cors());
+const allowedOrigins = [
+  "https://chat-app-chi-sepia-57.vercel.app", // Your frontend URL on Vercel
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 
 //Route setup
 app.use("/api/status", (req,res)=> res.send("Server is live"));
