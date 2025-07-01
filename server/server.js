@@ -7,75 +7,46 @@ import userRouter from "./routes/userRoutes.js";
 import messageRouter from "./routes/messageRoutes.js";
 import { Server } from "socket.io";
 
-// Create Express App
+// Create Express App using HTTP server
 const app = express();
 const server = http.createServer(app);
 
-// Allow only your frontend domain (replace with your actual Vercel frontend URL)
-const allowedOrigins = [
-  "http://localhost:5173", // for local development
-  "https://chat-howngpfjr-bhumees-projects-b0089f91.vercel.app", // deployed frontend (or replace with your actual)
-  "https://chat-app-chi-sepia-57.vercel.app", // any other frontend you used
-];
-
-// CORS Setup
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed for this origin"));
-      }
-    },
-    credentials: true,
-  })
-);
-
-// Optional: Set headers manually (extra protection)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", allowedOrigins[0]);
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
-
-// Body parser
-app.use(express.json({ limit: "4mb" }));
-
-// Initialize socket.io
+// Initialize socket.io server
 export const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins[0],
-    credentials: true,
-  },
+  cors: { origin: "*" }
 });
 
-// Store online users
+// Store Online users
 export const userSocketMap = {}; // { userId: socketId }
 
-// Socket connection handler
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-  console.log("User Connected:", userId);
+  console.log("User Connected", userId);
 
   if (userId) userSocketMap[userId] = socket.id;
 
+  // Emit online users to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", userId);
+    console.log("User disconnected", userId);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
-// API routes
+// Middleware
+app.use(express.json({ limit: "4mb" }));
+app.use(cors());
+
+// Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", userRouter);
 app.use("/api/messages", messageRouter);
 
-// Connect to MongoDB
+// Connect to DB
 await connectDB();
+
 
 // Start server locally (skip on Vercel)
 if (process.env.NODE_ENV !== "production") {
