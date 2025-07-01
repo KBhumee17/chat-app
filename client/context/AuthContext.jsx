@@ -27,7 +27,8 @@ export const AuthProvider = ({ children })=>{
                 connectSocket(data.user)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error("Session expired. Please log in again.");
+    logout();
         }
     }
 
