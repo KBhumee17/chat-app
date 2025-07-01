@@ -19,8 +19,9 @@ const allowedOrigins = [
 // Setup CORS for express
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
 }));
+
 
 // Middleware
 app.use(express.json({ limit: "4mb" }));
