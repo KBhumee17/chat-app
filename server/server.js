@@ -7,60 +7,64 @@ import userRouter from "./routes/userRoutes.js";
 import messageRouter from "./routes/messageRoutes.js";
 import { Server } from "socket.io";
 
-//Create Express App using HTTP server
+// Create Express App and HTTP server
 const app = express();
-const server = http.createServer(app) 
+const server = http.createServer(app);
 
-// Initialize socket.io server
-export const io = new Server(server, {
-    cors: {origin: "*"}
-})
-
-// Store Online users
-export const userSocketMap = {}; //{ userId: socketId }
-
-// Socket.io connection handler
-io.on("connection", (socket) => {
-    const userId = socket.handshake.query.userId;
-    console.log("User Connected", userId);
-
-    if(userId) userSocketMap[userId] = socket.id;
-
-    // emit online users to all connected clients 
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-    socket.on("disconnect", ()=> {
-        console.log("User disconnected", userId);
-        delete userSocketMap[userId];
-        io.emit("getOnlineUsers", Object.keys(userSocketMap))
-    })
-})
-
-
-// middleware Setup
-app.use(express.json({limit: "4mb"}));
+// Define allowed origins first!
 const allowedOrigins = [
-  "https://chat-app-chi-sepia-57.vercel.app", // Your frontend URL on Vercel
+  "https://chat-app-chi-sepia-57.vercel.app"
 ];
 
+// Setup CORS for express
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
 }));
 
+// Middleware
+app.use(express.json({ limit: "4mb" }));
 
-//Route setup
-app.use("/api/status", (req,res)=> res.send("Server is live"));
+// Setup socket.io AFTER allowedOrigins is defined
+export const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Online users map
+export const userSocketMap = {};
+
+// Socket.io logic
+io.on("connection", (socket) => {
+  const userId = socket.handshake.query.userId;
+  console.log("User Connected", userId);
+
+  if (userId) userSocketMap[userId] = socket.id;
+
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected", userId);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+// API Routes
+app.use("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", userRouter);
-app.use("/api/messages", messageRouter)
+app.use("/api/messages", messageRouter);
 
-//Connect to MongoDB
+// Connect to DB
 await connectDB();
 
-if(process.env.NODE_ENV !== "production"){
-    const PORT = process.env.PORT || 5000;
-    server.listen(PORT, ()=> console.log("Server is runnning on PORT:" + PORT));
+// Start server in dev or export for Vercel
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => console.log("Server is running on PORT:" + PORT));
 }
 
-//Export server for Vercel
 export default server;
