@@ -5,16 +5,15 @@ import { io } from "socket.io-client";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 axios.defaults.baseURL = backendUrl;
-// Intercept requests and convert 'token' to 'Authorization' header
+
+// Automatically add token to all requests
 axios.interceptors.request.use((config) => {
-  const token = config.headers.token || localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    delete config.headers.token;
   }
   return config;
 });
-
 
 export const AuthContext = createContext();
 
@@ -24,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [socket, setSocket] = useState(null);
 
-  // Check if user is authenticated
+  // Check authentication
   const checkAuth = async () => {
     try {
       const { data } = await axios.get("/api/auth/check");
@@ -33,18 +32,17 @@ export const AuthProvider = ({ children }) => {
         connectSocket(data.user);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
-  // Login function
+  // Login
   const login = async (state, credentials) => {
     try {
       const { data } = await axios.post(`/api/auth/${state}`, credentials);
       if (data.success) {
         setAuthUser(data.userData);
         connectSocket(data.userData);
-        axios.defaults.headers.common["token"] = data.token;
         setToken(data.token);
         localStorage.setItem("token", data.token);
         toast.success(data.message);
@@ -52,22 +50,21 @@ export const AuthProvider = ({ children }) => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
-  // Logout function
-  const logout = async () => {
+  // Logout
+  const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
     setAuthUser(null);
     setOnlineUsers([]);
-    axios.defaults.headers.common["token"] = null;
     toast.success("Logged out successfully");
     if (socket) socket.disconnect();
   };
 
-  // Update profile function
+  // Update profile
   const updateProfile = async (body) => {
     try {
       const { data } = await axios.put("/api/auth/update-profile", body);
@@ -80,17 +77,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Connect socket
+  // Connect socket.io
   const connectSocket = (userData) => {
     if (!userData || socket?.connected) return;
-
     const newSocket = io(backendUrl, {
-      query: { userId: userData._id }
+      query: { userId: userData._id },
     });
-
     newSocket.connect();
     setSocket(newSocket);
-
     newSocket.on("getOnlineUsers", (userIds) => {
       setOnlineUsers(userIds);
     });
@@ -98,9 +92,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["token"] = token;
+      checkAuth();
     }
-    checkAuth();
   }, []);
 
   const value = {
@@ -113,9 +106,5 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
