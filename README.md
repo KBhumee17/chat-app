@@ -1,9 +1,12 @@
 # 💬 QuickChat - Real-Time Chat Application 
 
 QuickChat is a modern real-time messaging app built using the MERN stack (MongoDB, Express, React, Node.js) with WebSocket-based communication using Socket.IO. It supports user authentication, private messaging, and a clean, responsive UI.
+
 ## 🔗 Live Demo
 
-👉 [Click here to try QuickChat Live]([https://your-deployment-url.com](https://vercel.com/bhumees-projects-b0089f91/chat-app-frontend))
+👉 [Click here to try QuickChat Live](https://chat-app-frontend-bhumees-projects-b0089f91.vercel.app)
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge&logo=vercel)](https://chat-app-frontend-bhumees-projects-b0089f91.vercel.app)
 
 ---
 
